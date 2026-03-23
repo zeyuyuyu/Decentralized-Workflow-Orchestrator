@@ -1,44 +1,57 @@
 import asyncio
 import json
 import os
-import uuid
-from typing import Dict, List, Tuple
+import time
+
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 class WorkflowEngine:
     def __init__(self):
-        self.workflows: Dict[str, List[Tuple[str, str]]] = {}
-        self.tasks: Dict[str, asyncio.Task] = {}
+        self.workflows: Dict[str, Workflow] = {}
+        self.tasks: Dict[str, WorkflowTask] = {}
 
-    async def execute_workflow(self, workflow_id: str):
-        if workflow_id not in self.workflows:
-            raise ValueError(f"Workflow '{workflow_id}' not found.")
-        
-        for task_id, task_func in self.workflows[workflow_id]:
-            self.tasks[task_id] = asyncio.create_task(self._execute_task(task_id, task_func))
-        
-        await asyncio.gather(*self.tasks.values())
+    def register_workflow(self, workflow: 'Workflow') -> None:
+        self.workflows[workflow.name] = workflow
 
-    async def _execute_task(self, task_id: str, task_func: str):
-        print(f"Executing task '{task_id}'")
-        # Execute the task function here
-        await asyncio.sleep(1)
-        print(f"Task '{task_id}' completed")
+    def register_task(self, task: 'WorkflowTask') -> None:
+        self.tasks[task.name] = task
 
-    def register_workflow(self, workflow_id: str, tasks: List[Tuple[str, str]]):
-        self.workflows[workflow_id] = tasks
+    async def execute_workflow(self, workflow_name: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        workflow = self.workflows.get(workflow_name)
+        if not workflow:
+            raise ValueError(f'Workflow "{workflow_name}" not found.')
 
-engine = WorkflowEngine()
+        workflow_state = WorkflowState(input_data)
+        await self._execute_workflow_steps(workflow, workflow_state)
+        return workflow_state.output
 
-engine.register_workflow(
-    "my_workflow",
-    [
-        ("task1", "task1_func"),
-        ("task2", "task2_func"),
-        ("task3", "task3_func"),
-    ],
-)
+    async def _execute_workflow_steps(self, workflow: 'Workflow', workflow_state: 'WorkflowState') -> None:
+        for step in workflow.steps:
+            task = self.tasks.get(step.task_name)
+            if not task:
+                raise ValueError(f'Task "{step.task_name}" not found.')
 
-async def main():
-    await engine.execute_workflow("my_workflow")
+            workflow_state.current_step = step
+            workflow_state.current_task = task
+            await task.execute(workflow_state)
 
-asyncio.run(main())
+class Workflow:
+    def __init__(self, name: str, steps: List['WorkflowStep']):
+        self.name = name
+        self.steps = steps
+
+class WorkflowStep:
+    def __init__(self, task_name: str):
+        self.task_name = task_name
+
+class WorkflowTask:
+    def __init__(self, name: str, execute: Callable[[WorkflowState], Awaitable[None]]):
+        self.name = name
+        self.execute = execute
+
+class WorkflowState:
+    def __init__(self, input_data: Dict[str, Any]):
+        self.input = input_data
+        self.output: Dict[str, Any] = {}
+        self.current_step: Optional[WorkflowStep] = None
+        self.current_task: Optional[WorkflowTask] = None
