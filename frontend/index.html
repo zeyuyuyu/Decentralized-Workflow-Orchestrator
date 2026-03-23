@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ModelMesh - AI Model Playground</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body class="bg-gradient-to-r from-purple-500 to-indigo-600 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Achievement Toast Notification -->
+        <div id="achievement-toast" class="fixed top-4 right-4 hidden animate__animated animate__bounceIn bg-yellow-400 text-black p-4 rounded-lg shadow-lg z-50">
+            🏆 New Achievement Unlocked!
+        </div>
+
+        <!-- Progress Bar and Level -->
+        <div class="bg-white rounded-lg p-4 mb-6 shadow-lg">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xl font-bold">Level <span id="user-level">1</span></span>
+                <span class="text-sm">XP: <span id="xp-count">0</span>/100</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div id="xp-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="bg-white rounded-lg p-6 shadow-lg">
+            <h1 class="text-3xl font-bold mb-6 text-center">ModelMesh Playground</h1>
+            
+            <!-- Model Selection & Interaction -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <select id="model-select" class="w-full p-2 border rounded-lg">
+                        <option value="">Select an AI Model</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="stable-diffusion">Stable Diffusion</option>
+                        <option value="dalle">DALL-E</option>
+                    </select>
+                    <textarea id="prompt" class="w-full p-2 border rounded-lg" rows="4" placeholder="Enter your prompt..."></textarea>
+                    <button onclick="generateAndShare()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-lg hover:opacity-90 transform hover:scale-105 transition-all">
+                        ✨ Generate & Share Magic
+                    </button>
+                </div>
+                
+                <div id="result-container" class="bg-gray-100 rounded-lg p-4 min-h-[200px] relative">
+                    <div id="result" class="mb-4"></div>
+                    
+                    <!-- Social Sharing Section -->
+                    <div class="flex space-x-2 absolute bottom-4 right-4">
+                        <button onclick="shareToTwitter()" class="bg-blue-400 text-white p-2 rounded-lg hover:bg-blue-500">
+                            Share on Twitter
+                        </button>
+                        <button onclick="shareToReddit()" class="bg-orange-500 text-white p-2 rounded-lg hover:bg-orange-600">
+                            Share on Reddit
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievement Showcase -->
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold mb-4">Your Achievements</h2>
+                <div id="achievements-grid" class="grid grid-cols-3 md:grid-cols-6 gap-4">
+                    <!-- Achievement badges will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Community Leaderboard -->
+            <div class="mt-8">
+                <h2 class="text-2xl font-bold mb-4">Top Creators</h2>
+                <div id="leaderboard" class="space-y-2">
+                    <!-- Leaderboard entries will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let userXP = 0;
+        let userLevel = 1;
+        const achievements = [
+            { id: 'first_gen', title: 'First Creation', description: 'Generated your first AI creation', icon: '🎨' },
+            { id: 'social_butterfly', title: 'Social Butterfly', description: 'Shared 5 creations', icon: '🦋' },
+            { id: 'viral_hit', title: 'Viral Hit', description: 'Got 100+ likes on a creation', icon: '🌟' }
+        ];
+
+        function addXP(amount) {
+            userXP += amount;
+            if (userXP >= 100) {
+                userLevel++;
+                userXP = userXP - 100;
+                showAchievementToast('Level Up! 🎉');
+            }
+            document.getElementById('xp-count').textContent = userXP;
+            document.getElementById('user-level').textContent = userLevel;
+            document.getElementById('xp-bar').style.width = `${userXP}%`;
+        }
+
+        function showAchievementToast(message) {
+            const toast = document.getElementById('achievement-toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function generateAndShare() {
+            // Simulate generation
+            const result = document.getElementById('result');
+            result.innerHTML = '<div class="animate__animated animate__pulse">✨ Generated content would appear here...</div>';
+            addXP(10);
+        }
+
+        function shareToTwitter() {
+            // Implement Twitter sharing
+            addXP(5);
+            showAchievementToast('Shared on Twitter! +5 XP');
+        }
+
+        function shareToReddit() {
+            // Implement Reddit sharing
+            addXP(5);
+            showAchievementToast('Shared on Reddit! +5 XP');
+        }
+
+        // Initialize achievements
+        const achievementsGrid = document.getElementById('achievements-grid');
+        achievements.forEach(achievement => {
+            achievementsGrid.innerHTML += `
+                <div class="bg-gray-100 p-4 rounded-lg text-center hover:bg-gray-200 cursor-pointer transform hover:scale-105 transition-all">
+                    <div class="text-3xl mb-2">${achievement.icon}</div>
+                    <div class="font-bold text-sm">${achievement.title}</div>
+                </div>
+            `;
+        });
+
+        // Initialize leaderboard
+        const leaderboard = document.getElementById('leaderboard');
+        const demoUsers = [
+            { name: 'ArtMaster', xp: 1200, avatar: '👨‍🎨' },
+            { name: 'AIWizard', xp: 980, avatar: '🧙‍♀️' },
+            { name: 'PixelPro', xp: 850, avatar: '👩‍💻' }
+        ];
+
+        demoUsers.forEach((user, index) => {
+            leaderboard.innerHTML += `
+                <div class="bg-gray-100 p-3 rounded-lg flex items-center justify-between hover:bg-gray-200 transition-all">
+                    <div class="flex items-center">
+                        <span class="text-xl mr-2">${index + 1}</span>
+                        <span class="text-2xl mr-2">${user.avatar}</span>
+                        <span class="font-bold">${user.name}</span>
+                    </div>
+                    <span>${user.xp} XP</span>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
